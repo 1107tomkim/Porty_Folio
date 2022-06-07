@@ -3,6 +3,9 @@ import './style.css'
 // importing everything from JS THREE
 import * as THREE from 'three';
 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { MeshBasicMaterial } from 'three';
+
 // Creating a canvas for us to see
 const scene =  new THREE.Scene();
 
@@ -21,16 +24,42 @@ camera.position.setZ(30);
 renderer.render( scene, camera);
 
 const geometry = new THREE.TorusGeometry( 10, 3, 16, 100 )
-const material = new THREE.MeshStandardMaterial( { color: 0xFF6347 } );
+const material = new THREE.MeshStandardMaterial( { color: 0xFF6347, wireframe: true } );
 const torus = new THREE.Mesh( geometry, material);
 
 scene.add(torus)
 
+
+// pointlight is a light in a specific area
 const pointLight = new THREE.PointLight(0xffffff)
-pointLight.position.set(20, 20, 20)
+pointLight.position.set(5, 5, 5)
 
-scene.add(pointLight)
+// Ambientlight allows the light to be lit around the whole room
+const ambientLight = new THREE.AmbientLight(0xffffff);
+scene.add(pointLight, ambientLight)
 
+// PointLightHelper is a built in helper that shows the position and direction of light source.
+const lightHelper = new THREE.PointLightHelper(pointLight);
+scene.add(lightHelper)
+
+const controls =  new OrbitControls(camera, renderer.domElement);
+
+
+function addStar() {
+  const geometry = new THREE.SphereGeometry(0.25 , 24, 24);
+  const material = new THREE.MeshStandardMaterial({ color: 0xffffff })
+  const star = new THREE.Mesh( geometry, material);
+
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread( 100 ));
+
+  star.position.set(x, y, z);
+  scene.add(star)
+}
+
+Array(200).fill().forEach(addStar)
+
+const spaceTexture = new THREE.TextureLoader().load('space.jpg');
+scene.background = spaceTexture;
 
 function animate() {
   requestAnimationFrame( animate );
@@ -39,7 +68,21 @@ function animate() {
   torus.rotation.y += 0.005;
   torus.rotation.z += 0.01;
 
+  controls.update();
+
   renderer.render( scene, camera);
 }
 
 animate()
+
+
+
+function moveCamera() {
+  const t = document.body.getBoundingClientRect().top;
+  camera.position.z = t * -0.01;
+  camera.position.x = t * -0.0002;
+  camera.position.y = t * -0.0002;
+
+}
+
+document.body.onscroll = moveCamera
